@@ -1,0 +1,36 @@
+### Go ###
+# Binaries for programs and plugins
+*/*.exe
+*.exe
+*/*.exe~
+*.exe~
+*/*.dll
+*.dll
+*/*.so
+*.so
+*/*.dylib
+*.dylib
+
+# Test binary, built with `go test -c`
+*/*.test
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*/*.out
+*.out
+
+# log file
+*/*.log
+*.log
+
+### VisualStudioCode ###
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*/__debug_bin
+__debug_bin
+
+### jetbrains IDE ###
+.idea/*
