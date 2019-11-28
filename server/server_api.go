@@ -1,5 +1,3 @@
-// Defines the interface for a MultiEchoServer. DO NOT MODIFY THIS FILE!
-
 package server
 
 // MultiEchoServer implements an "echo to everyone" socket server.
