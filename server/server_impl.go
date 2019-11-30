@@ -80,26 +80,26 @@ func (mes *multiEchoServer) serve(ctx context.Context, l net.Listener) error {
 			_ = l.Close()
 			return nil
 		default:
-			conn, err := l.Accept()
-			if err != nil {
-				if ne, ok := err.(net.Error); ok && ne.Temporary() {
-					if tmpDelay == 0 {
-						tmpDelay = 5 * time.Millisecond
-					} else {
-						tmpDelay *= 2
-					}
-					if max := 1 * time.Second; tmpDelay > max {
-						tmpDelay = max
-					}
-					log.Printf("http: Accept error: %v; retrying in %v", err, tmpDelay)
-					time.Sleep(tmpDelay)
-					continue
-				}
-				return err
-			}
-			tmpDelay = 0
-			go mes.handleConn(ctx, conn)
 		}
+		conn, err := l.Accept()
+		if err != nil {
+			if ne, ok := err.(net.Error); ok && ne.Temporary() {
+				if tmpDelay == 0 {
+					tmpDelay = 5 * time.Millisecond
+				} else {
+					tmpDelay *= 2
+				}
+				if max := 1 * time.Second; tmpDelay > max {
+					tmpDelay = max
+				}
+				log.Printf("http: Accept error: %v; retrying in %v", err, tmpDelay)
+				time.Sleep(tmpDelay)
+				continue
+			}
+			return err
+		}
+		tmpDelay = 0
+		go mes.handleConn(ctx, conn)
 	}
 }
 
@@ -145,27 +145,28 @@ func (mes *multiEchoServer) handleConn(ctx context.Context, conn net.Conn) {
 			case <-ctx.Done():
 				return
 			default:
-				buf := make([]byte, 2048)
-				for {
-					r := bufio.NewReader(conn)
-					n, err := r.Read(buf)
-					if err != nil || n == 0 {
-						// client disconnect
-						log.Printf("client %s read error: %v", addr, err)
-						quit <- struct{}{}
-						return
+			}
+
+			buf := make([]byte, 2048)
+			for {
+				r := bufio.NewReader(conn)
+				n, err := r.Read(buf)
+				if err != nil || n == 0 {
+					// client disconnect
+					log.Printf("client %s read error: %v", addr, err)
+					quit <- struct{}{}
+					return
+				}
+				if n == 3 && string(buf[:n]) == "who" {
+					var buf bytes.Buffer
+					buf.WriteString("user lists :\n")
+					for k := range mes.clients {
+						buf.WriteString("-" + k)
 					}
-					if n == 3 && string(buf[:n]) == "who" {
-						var buf bytes.Buffer
-						buf.WriteString("user lists :\n")
-						for k := range mes.clients {
-							buf.WriteString("-" + k)
-						}
-						_, _ = conn.Write(buf.Bytes())
-					} else {
-						//broadcast message
-						mes.message <- buf[:n]
-					}
+					_, _ = conn.Write(buf.Bytes())
+				} else {
+					//broadcast message
+					mes.message <- buf[:n]
 				}
 			}
 		}
