@@ -154,7 +154,7 @@ func (mes *multiEchoServer) handleConn(ctx context.Context, conn net.Conn) {
 				if err != nil || n == 0 {
 					// client disconnect
 					log.Printf("client %s read error: %v", addr, err)
-					quit <- struct{}{}
+					close(quit)
 					return
 				}
 				if n == 3 && string(buf[:n]) == "who" {
@@ -182,11 +182,13 @@ func (mes *multiEchoServer) handleConn(ctx context.Context, conn net.Conn) {
 		case <-quit:
 			delete(mes.clients, addr)
 			mes.message <- makeMsg(*cli, "logout")
+			conn.Close()
 			return
 		case <-timer.C:
 			//timeout quit
 			delete(mes.clients, addr)
 			mes.message <- makeMsg(*cli, "timeout logout")
+			conn.Close()
 			return
 		case <-ctx.Done():
 			delete(mes.clients, addr)
